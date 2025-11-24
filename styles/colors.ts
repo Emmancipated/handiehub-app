@@ -1,0 +1,12 @@
+export const primaryColor = "#5B48FC";
+export const secondaryColor = "#EFEDFF";
+export const white = "#FFFFFF";
+export const primaryGray = "#F3F3F3";
+export const secondaryGray = "#BBBBBB";
+export const grayText = "#868686";
+export const primaryOrange = "#D79900";
+export const primaryBlack = "#131313";
+export const orangeShadeOne = "#FBE5B6";
+export const foundationGray100 = "#E8E8E8";
+export const black100 = "#000000";
+export const gray_400 = "#A6A6A6";

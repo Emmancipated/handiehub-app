@@ -1,98 +1,836 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { ActionButton } from "@/components/Atoms/ActionButton/ActionButton";
+import { NotificationIcon } from "@/components/Atoms/NotificationIcon/NotificationIcon";
+import { SearchBar } from "@/components/Atoms/SearchBar/SearchBar";
+import { categoryData } from "@/helper/home/helper";
+import { getAllProducts } from "@/services/productServices";
+import { styles } from "@/styles/home/styles";
+import { Link } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  Animated,
+  Dimensions,
+  FlatList,
+  ScrollView,
+  StatusBar,
+  Text,
+  TouchableOpacity,
+  View,
+  useColorScheme,
+} from "react-native";
+const Colors = {
+  darker: "#000000",
+  lighter: "#ffffff",
+};
+// import { ProductCard } from "../ProductCard/ProductCard";
+import { Logo } from "@/components/Atoms/Logo/Logo";
+import { HandieMenGroup } from "@/components/handieMenGroup/HandieMenGroup";
+import { ProductCard } from "@/components/ProductCard/ProductCard";
+import { ServiceCard } from "@/components/serviceCard/ServiceCard";
+import { primaryBlack, primaryColor, white } from "@/styles/colors";
+import { useRouter } from "expo-router";
+import { ArrowDownAZ, Hammer, Library } from "lucide-react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import tw from "twrnc";
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+const numColumns = 2; // Number of columns in the grid
+const screenWidth = Dimensions.get("window").width - 32;
+const itemMargin = 1; // Margin between grid items
+const itemWidth = (screenWidth - (numColumns + 1) * itemMargin) / numColumns;
 
-export default function HomeScreen() {
+export const categoryDataIcon = [
+  {
+    id: "all",
+    name: "All Categories",
+    iconProp: <ArrowDownAZ color="#5B48FC" size={32} />,
+  },
+  {
+    id: "plumbing",
+    name: "Plumbing",
+    iconProp: <Library color="#5B48FC" size={32} />,
+  },
+  {
+    id: "carpentry",
+    name: "Carpentry",
+    iconProp: <Hammer color="#5B48FC" size={32} />,
+  },
+  {
+    id: "cleaning",
+    name: "Cleaning",
+    iconProp: <ArrowDownAZ color="red" size={32} />,
+  },
+  {
+    id: "nanny",
+    name: "Nanny & Childcare",
+    iconProp: <ArrowDownAZ color="red" size={32} />,
+  },
+  {
+    id: "welding",
+    name: "Welding",
+    iconProp: <ArrowDownAZ color="red" size={32} />,
+  },
+  {
+    id: "electrical",
+    name: "Electrical",
+    iconProp: <ArrowDownAZ color="red" size={32} />,
+  },
+  {
+    id: "painting",
+    name: "Painting",
+    iconProp: <ArrowDownAZ color="red" size={32} />,
+  },
+  {
+    id: "landscaping",
+    name: "Landscaping",
+    iconProp: <ArrowDownAZ color="red" size={32} />,
+  },
+];
+
+function HomePageComponent() {
+  const [active, setActive] = useState(0);
+  const [activeNav, setActiveNav] = useState("Home");
+  const [products, setProducts] = useState<any[]>([]);
+  const navigate = useRouter();
+
+  const scrollY = useRef(new Animated.Value(0)).current;
+
+  const headerTranslate = scrollY.interpolate({
+    inputRange: [0, 10],
+    outputRange: [0, -10], // Adjusts logoSection's position when scrolling
+    extrapolate: "clamp",
+  });
+
+  const isDarkMode = useColorScheme() === "dark";
+
+  const backgroundStyle = {
+    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+  };
+  useEffect(() => {
+    const handleGetAllProducts = async () => {
+      try {
+        const products = await getAllProducts("1", "10");
+        console.log(products, "get prdt");
+
+        setProducts(products?.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    handleGetAllProducts();
+  }, []);
+  const services = Array.from({ length: 4 }).map((_, i) => ({ id: `s-${i}` }));
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <SafeAreaView edges={["top"]} style={{ flex: 1 }}>
+      <StatusBar
+        barStyle={isDarkMode ? "light-content" : "dark-content"}
+        backgroundColor={backgroundStyle.backgroundColor}
+      />
+      <View style={styles.appContainer}>
+        <Animated.View
+        // style={[
+        //   {
+        //     transform: [{ translateY: headerTranslate }],
+        //   },
+        // ]}
+        >
+          <View style={tw`flex flex-row items-center justify-between `}>
+            <Logo />
+            <NotificationIcon />
+          </View>
+          <View
+            style={tw`flex flex-row items-center justify-between mb-4 mt-1`}
+          >
+            <TouchableOpacity
+              activeOpacity={0.7}
+              style={[styles.navItems, styles.navItemActive]}
+            >
+              <View>
+                <Link style={[styles.navItemActiveText]} href={"/auth/signup"}>
+                  Signup
+                </Link>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity activeOpacity={0.7} style={[styles.navItems]}>
+              <View>
+                <Link
+                  style={[styles.navItemActiveText, styles.navItemInactiveText]}
+                  href={"/auth/login"}
+                >
+                  Login
+                </Link>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+        <Animated.ScrollView
+          contentInsetAdjustmentBehavior="automatic"
+          style={styles.scrollView}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+            { useNativeDriver: true }
+          )}
+          scrollEventThrottle={16}
+        >
+          <Link href="/handieman">View Handieman</Link>
+          <Link href="/(tabs)">View Logged In user</Link>
+          <Text style={styles.headerSection}>Welcome Sly👋🏼</Text>
+          <Text>Search for any service of your choice</Text>
+
+          <SearchBar />
+
+          {/* Hero Section */}
+          <View style={tw`bg-[#5B48FC] items-center rounded-[22px] p-6 my-5`}>
+            <Text
+              style={tw` text-[28px] font-bold text-white text-center mb-3 leading-[34px]`}
+            >
+              Find the Perfect Handieman for Every Job
+            </Text>
+            <Text
+              style={tw`font-base text-white text-center mb-6 leading-[22px] opacity-75 `}
+            >
+              Connect with skilled professionals for all your home and business
+              needs. Quality service, fair prices, guaranteed satisfaction.
+            </Text>
+            <View
+              style={tw`flex-row justify-center items-center gap-[12px] w-full`}
+            >
+              <ActionButton
+                text="Browse Services"
+                action={() => navigate.navigate("/(tabs)")}
+                activateButton={false}
+                lightPurple
+              />
+              <ActionButton
+                text="Become a Handieman"
+                action={() => navigate.navigate("/auth/signup")}
+                activateButton={false}
+                lightPurple
+              />
+            </View>
+          </View>
+
+          {/* Categories Section */}
+          <View style={{ marginVertical: 20 }}>
+            <View style={tw` flex-row justify-between items-center mb-4`}>
+              <Text style={tw`text-[20px] font-bold text-[#131313]`}>
+                Popular Categories
+              </Text>
+              <TouchableOpacity
+                onPress={() => navigate.navigate("/category/all")}
+              >
+                <Text style={tw` text-sm text-[#5B48FC] font-semibold`}>
+                  View All
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Enhanced Categories Grid */}
+            <View
+              style={{
+                flexDirection: "row",
+                flexWrap: "wrap",
+                justifyContent: "space-between",
+                marginBottom: 16,
+              }}
+            >
+              {categoryData.slice(0, 8).map((category, i) => (
+                <TouchableOpacity
+                  key={category.id}
+                  onPress={() => navigate.navigate(`/category/${category.id}`)}
+                  style={{
+                    width: "48%",
+                    backgroundColor: white,
+                    borderRadius: 22,
+                    padding: 16,
+                    marginBottom: 12,
+                    borderWidth: 1,
+                    borderColor: "#e5e7eb",
+                    shadowColor: "#000",
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 2,
+                    elevation: 2,
+                  }}
+                >
+                  <View
+                    style={{
+                      alignItems: "center",
+                      marginBottom: 8,
+                    }}
+                  >
+                    <Text style={{ fontSize: 32, marginBottom: 4 }}>
+                      {category.icon}
+                    </Text>
+                    {/* {categoryDataIcon[i].name === category.name &&
+                        categoryDataIcon[i].iconProp} */}
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        fontWeight: "600",
+                        color: primaryBlack,
+                        textAlign: "center",
+                        marginBottom: 4,
+                      }}
+                    >
+                      {category.name}
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: 11,
+                        color: "#666",
+                        textAlign: "center",
+                        lineHeight: 14,
+                      }}
+                    >
+                      {category.subCategories.length} services
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Horizontal Scroll for More Categories */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingRight: 16 }}
+            >
+              {categoryData.map((category) => (
+                <TouchableOpacity
+                  key={category.id}
+                  onPress={() => navigate.navigate(`/category/${category.id}`)}
+                  style={{
+                    backgroundColor: category.color + "15",
+                    borderRadius: 20,
+                    paddingHorizontal: 16,
+                    paddingVertical: 8,
+                    marginRight: 8,
+                    borderWidth: 1,
+                    borderColor: category.color + "30",
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      color: category.color,
+                      fontWeight: "600",
+                    }}
+                  >
+                    {category.icon} {category.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+
+          {/* Featured Products Section */}
+          <View style={{ marginVertical: 20 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 16,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 20,
+                  fontWeight: "bold",
+                  color: primaryBlack,
+                }}
+              >
+                Featured Products
+              </Text>
+              <TouchableOpacity
+                onPress={() => navigate.navigate("/(tabs)/handiemanshop")}
+              >
+                <Text
+                  style={{
+                    fontSize: 14,
+                    color: primaryColor,
+                    fontWeight: "600",
+                  }}
+                >
+                  View All
+                </Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingRight: 16 }}
+            >
+              {products && products.length > 0 ? (
+                products.slice(0, 5).map((product) => (
+                  <View
+                    key={product?._id}
+                    style={{
+                      marginRight: 12,
+                      width: 200,
+                    }}
+                  >
+                    <ProductCard
+                      navigation={`/product/${product?.slug}`}
+                      handiemanBizName={
+                        product?.handieman.handiemanProfile.businessName
+                      }
+                      image={product?.images[0]}
+                      dp={product?.handieman.handiemanProfile.dp_url}
+                      description={product?.description}
+                      name={product?.name}
+                      price={product?.amount}
+                    />
+                  </View>
+                ))
+              ) : (
+                <View
+                  style={{
+                    padding: 20,
+                    alignItems: "center",
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: primaryBlack,
+                      fontSize: 14,
+                    }}
+                  >
+                    Loading featured products...
+                  </Text>
+                </View>
+              )}
+            </ScrollView>
+          </View>
+
+          {/* Services Showcase */}
+          <View style={{ marginVertical: 20 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 16,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 20,
+                  fontWeight: "bold",
+                  color: primaryBlack,
+                }}
+              >
+                Top Services
+              </Text>
+              <TouchableOpacity onPress={() => navigate.navigate("/handieman")}>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    color: primaryColor,
+                    fontWeight: "600",
+                  }}
+                >
+                  View All
+                </Text>
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={services}
+              keyExtractor={(item) => item.id}
+              numColumns={2}
+              columnWrapperStyle={{
+                justifyContent: "space-between",
+              }}
+              renderItem={({ item }) => (
+                <View style={{ marginBottom: 12 }}>
+                  <ServiceCard
+                    navigation={() => navigate.push("/product/item")}
+                    style={{ width: itemWidth }}
+                  />
+                </View>
+              )}
+              scrollEnabled={false}
+            />
+          </View>
+
+          {/* Testimonials Section */}
+          <View style={{ marginVertical: 20 }}>
+            <Text
+              style={{
+                fontSize: 20,
+                fontWeight: "bold",
+                color: primaryBlack,
+                marginBottom: 16,
+              }}
+            >
+              What Our Customers Say
+            </Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingRight: 16 }}
+            >
+              <View
+                style={{
+                  backgroundColor: "#f8f9fa",
+                  borderRadius: 12,
+                  padding: 16,
+                  marginRight: 12,
+                  width: 280,
+                  minHeight: 120,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 14,
+                    color: primaryBlack,
+                    lineHeight: 20,
+                    marginBottom: 12,
+                    fontStyle: "italic",
+                  }}
+                >
+                  "Excellent service! The handieman was professional, punctual,
+                  and did amazing work. Highly recommended!"
+                </Text>
+                <View style={{ alignItems: "flex-start" }}>
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: "600",
+                      color: primaryBlack,
+                    }}
+                  >
+                    Sarah Johnson
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      color: "#666",
+                      marginTop: 2,
+                    }}
+                  >
+                    Lagos, Nigeria
+                  </Text>
+                </View>
+              </View>
+              <View
+                style={{
+                  backgroundColor: "#f8f9fa",
+                  borderRadius: 12,
+                  padding: 16,
+                  marginRight: 12,
+                  width: 280,
+                  minHeight: 120,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 14,
+                    color: primaryBlack,
+                    lineHeight: 20,
+                    marginBottom: 12,
+                    fontStyle: "italic",
+                  }}
+                >
+                  "Quick response time and fair pricing. My plumbing issue was
+                  fixed in no time. Will definitely use again!"
+                </Text>
+                <View style={{ alignItems: "flex-start" }}>
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: "600",
+                      color: primaryBlack,
+                    }}
+                  >
+                    Michael Adebayo
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      color: "#666",
+                      marginTop: 2,
+                    }}
+                  >
+                    Abuja, Nigeria
+                  </Text>
+                </View>
+              </View>
+              <View
+                style={{
+                  backgroundColor: "#f8f9fa",
+                  borderRadius: 12,
+                  padding: 16,
+                  marginRight: 12,
+                  width: 280,
+                  minHeight: 120,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 14,
+                    color: primaryBlack,
+                    lineHeight: 20,
+                    marginBottom: 12,
+                    fontStyle: "italic",
+                  }}
+                >
+                  "Outstanding craftsmanship and attention to detail. The
+                  carpenter exceeded my expectations completely."
+                </Text>
+                <View style={{ alignItems: "flex-start" }}>
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: "600",
+                      color: primaryBlack,
+                    }}
+                  >
+                    Grace Okafor
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      color: "#666",
+                      marginTop: 2,
+                    }}
+                  >
+                    Port Harcourt, Nigeria
+                  </Text>
+                </View>
+              </View>
+            </ScrollView>
+          </View>
+
+          {/* Why Choose Us Section */}
+          <View style={{ marginVertical: 20 }}>
+            <Text
+              style={{
+                fontSize: 20,
+                fontWeight: "bold",
+                color: primaryBlack,
+                marginBottom: 16,
+              }}
+            >
+              Why Choose HandieHub?
+            </Text>
+            <View
+              style={{
+                flexDirection: "row",
+                flexWrap: "wrap",
+                justifyContent: "space-between",
+              }}
+            >
+              <View
+                style={{
+                  width: "48%",
+                  backgroundColor: "#f8f9fa",
+                  borderRadius: 12,
+                  padding: 16,
+                  marginBottom: 12,
+                  alignItems: "center",
+                }}
+              >
+                <Text style={{ fontSize: 24, marginBottom: 8 }}>⚡</Text>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontWeight: "600",
+                    color: primaryBlack,
+                    textAlign: "center",
+                    marginBottom: 4,
+                  }}
+                >
+                  Quick Response
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 12,
+                    color: "#666",
+                    textAlign: "center",
+                    lineHeight: 16,
+                  }}
+                >
+                  Get connected with handiemen in minutes, not hours
+                </Text>
+              </View>
+              <View
+                style={{
+                  width: "48%",
+                  backgroundColor: "#f8f9fa",
+                  borderRadius: 12,
+                  padding: 16,
+                  marginBottom: 12,
+                  alignItems: "center",
+                }}
+              >
+                <Text style={{ fontSize: 24, marginBottom: 8 }}>🛡️</Text>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontWeight: "600",
+                    color: primaryBlack,
+                    textAlign: "center",
+                    marginBottom: 4,
+                  }}
+                >
+                  Verified Professionals
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 12,
+                    color: "#666",
+                    textAlign: "center",
+                    lineHeight: 16,
+                  }}
+                >
+                  All handiemen are background checked and verified
+                </Text>
+              </View>
+              <View
+                style={{
+                  width: "48%",
+                  backgroundColor: "#f8f9fa",
+                  borderRadius: 12,
+                  padding: 16,
+                  marginBottom: 12,
+                  alignItems: "center",
+                }}
+              >
+                <Text style={{ fontSize: 24, marginBottom: 8 }}>💰</Text>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontWeight: "600",
+                    color: primaryBlack,
+                    textAlign: "center",
+                    marginBottom: 4,
+                  }}
+                >
+                  Fair Pricing
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 12,
+                    color: "#666",
+                    textAlign: "center",
+                    lineHeight: 16,
+                  }}
+                >
+                  Transparent pricing with no hidden fees
+                </Text>
+              </View>
+              <View
+                style={{
+                  width: "48%",
+                  backgroundColor: "#f8f9fa",
+                  borderRadius: 12,
+                  padding: 16,
+                  marginBottom: 12,
+                  alignItems: "center",
+                }}
+              >
+                <Text style={{ fontSize: 24, marginBottom: 8 }}>⭐</Text>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontWeight: "600",
+                    color: primaryBlack,
+                    textAlign: "center",
+                    marginBottom: 4,
+                  }}
+                >
+                  Quality Guarantee
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 12,
+                    color: "#666",
+                    textAlign: "center",
+                    lineHeight: 16,
+                  }}
+                >
+                  100% satisfaction guarantee on all services
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* CTA Section */}
+          <View style={tw`bg-[#f8f9fa] rounded-[16px] p-6 my-5 items-center`}>
+            <Text
+              style={tw` text-[24px] font-bold text-[#131313] text-center mb-2`}
+            >
+              Ready to Get Started?
+            </Text>
+            <Text
+              style={tw`font-base text-[#666] text-center mb-6 leading-[22px]`}
+            >
+              Join thousands of satisfied customers who trust HandieHub for
+              their home and business needs
+            </Text>
+            <View style={tw`flex-row gap-[12px] w-full justify-center`}>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                style={[styles.navItems, styles.navItemActive]}
+              >
+                <View>
+                  <Link style={[styles.navItemActiveText]} href={"/seller/all"}>
+                    Find a Handieman
+                  </Link>
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                style={[styles.navItems, styles.navItemActive]}
+              >
+                <View>
+                  <Link
+                    style={[styles.navItemActiveText]}
+                    href={"/handieman/(tabs)"}
+                  >
+                    Start Earning
+                  </Link>
+                </View>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Recently Viewed Section */}
+          <HandieMenGroup
+            header="Recently Viewed"
+            style={styles.lasthandieGroup}
+          >
+            <View
+              style={{
+                alignItems: "center",
+                padding: 20,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 14,
+                  color: "#666",
+                  textAlign: "center",
+                  marginBottom: 16,
+                  lineHeight: 20,
+                }}
+              >
+                No recently viewed items yet. Start browsing to see your history
+                here!
+              </Text>
+              <ActionButton
+                text="Browse Services"
+                action={() => navigate.navigate("/(tabs)")}
+                activateButton={false}
+              />
+            </View>
+          </HandieMenGroup>
+        </Animated.ScrollView>
+      </View>
+    </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
+export default HomePageComponent;
